@@ -6,6 +6,11 @@ public class BiomeHills : IBiome
 {
     float biomeMaxHeight = 48.0f;
 
+    public override IBlock GetBiomeBlockType()
+    {
+        return FlyweightBlock.Get<BlockDirt>();
+    }
+
     public override int[] GenerateHeightmap(Vector2 worldPos)
     {
         worldPos.x += 50000;
@@ -29,11 +34,13 @@ public class BiomeHills : IBiome
         return heightmap;
     }
 
-    public override BlockData[,] GenerateBlockData(Vector2 worldPos, int[] heightmap)
+    public override BlockData[,] GenerateBlockData(Vector2 worldPos, int[] heightmap, IBlock blendingBlock = null)
     {
         BlockData[,] blocks = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
 
         int[,] map = GenerateCaveHeightmap(worldPos, defaultCaveCAMapConfig);
+
+        Hasher hasher = new Hasher(worldPos, Hasher.HashType.BiomeBlendHash);
 
         for(int x = 0; x < ChunkUtil.chunkWidth; x++)
         {
@@ -42,7 +49,46 @@ public class BiomeHills : IBiome
                 if(worldPos.y == 0)
                 {
                     blocks[x,y] = y <= heightmap[x]? new BlockData(FlyweightBlock.Get<BlockDirt>()) : FlyweightBlock.blockDataAir;
+
+                    if(blendingBlock != null && y<= heightmap[x])
+                    {
+                        float horizontalBlendChance = 1.0f - (float) (1.5f * (x+1) / (float)ChunkUtil.chunkWidth);
+
+                        if(hasher.Next() <= horizontalBlendChance)
+                        {
+                            blocks[x,y] = new BlockData(blendingBlock);
+                        } 
+                    }
+
                 }   
+                else if (worldPos.y == -ChunkUtil.chunkHeight)
+                {
+                    blocks[x,y] = new BlockData(FlyweightBlock.Get<BlockDirt>());
+                    
+                    if(map[x, y] == 1)
+                    {
+                        blocks[x,y] = FlyweightBlock.blockDataAir;
+                    }   
+
+                    float verticalBlendChance = 1.0f - (float) ((float)y / (float)ChunkUtil.chunkHeight);
+
+                    if(hasher.Next() <= verticalBlendChance)
+                    {
+                        blocks[x,y] = new BlockData(FlyweightBlock.Get<BlockStone>());
+                    } 
+
+                    if(blendingBlock != null)
+                    {
+                        //blocks[x,y] = new BlockData(FlyweightBlock.Get<BlockDirt>());
+
+                        float horizontalBlendChance = 1.0f - (float) (1.5f * (x+1) / (float)ChunkUtil.chunkWidth);
+
+                        if(hasher.Next() <= horizontalBlendChance)
+                        {
+                            blocks[x,y] = new BlockData(blendingBlock);
+                        } 
+                    }
+                }
                 else if(worldPos.y < 0)
                 {
                     blocks[x,y] = new BlockData(FlyweightBlock.Get<BlockStone>());
@@ -60,8 +106,9 @@ public class BiomeHills : IBiome
 
             }
         }
-    
-        GenerateOres(worldPos, blocks, defaultOreDistrib);
+
+        //if (worldPos.y != -ChunkUtil.chunkHeight)
+            GenerateOres(worldPos, blocks, defaultOreDistrib);
 
         return blocks;
     }

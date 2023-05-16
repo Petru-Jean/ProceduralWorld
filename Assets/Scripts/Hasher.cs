@@ -9,7 +9,9 @@ public class Hasher
         CaveHash, 
         OreHash,
         CaHash,
-        OreBlockHash
+        OreBlockHash,
+        BiomeHash,
+        BiomeBlendHash
     };
 
     // public static float Hash(Vector2 worldPosition, HashType hashType, int iteration)

@@ -20,11 +20,37 @@ public class PlayerActionController : MonoBehaviour
 
         if(hit)
         {
-            Vector2Int blockPos = new Vector2Int((int) hit.point.x % ChunkUtil.chunkWidth, (int) hit.point.y % ChunkUtil.chunkHeight);
+            Vector2Int blockPos = Vector2Int.zero;
+            Vector2Int chunkPos = Vector2Int.zero;
+
+            float x1 = Mathf.Abs(hit.point.x) % ChunkUtil.chunkWidth;
+            float y1 = Mathf.Abs(hit.point.y) % ChunkUtil.chunkHeight;
+
+            if(hit.point.x < 0)
+            {
+                chunkPos.x = (int) (hit.point.x - (ChunkUtil.chunkWidth  - x1));
+                blockPos.x = ChunkUtil.chunkWidth - Mathf.CeilToInt(Mathf.Abs(hit.point.x % ChunkUtil.chunkWidth));
+            }
+            else
+            {
+                chunkPos.x = (int) (hit.point.x - x1);
+                blockPos.x = (int) Mathf.Abs(hit.point.x % ChunkUtil.chunkWidth);
+            }
+
+            if(hit.point.y < 0 )
+            {
+                chunkPos.y = (int) (hit.point.y - (ChunkUtil.chunkHeight - y1));
+                blockPos.y =  ChunkUtil.chunkHeight - Mathf.CeilToInt(Mathf.Abs(hit.point.y % ChunkUtil.chunkHeight));
+            }
+            else
+            {
+                chunkPos.y = (int) (hit.point.y - y1);
+                blockPos.y = (int) Mathf.Abs(hit.point.y % ChunkUtil.chunkHeight);
+            }
 
             if(Input.GetMouseButtonDown(0))
             {
-                _cache.GetChunk(ChunkUtil.WorldToChunkPos((int)hit.point.x, (int)hit.point.y)).GetComponent<Chunk>().SetBlock(blockPos.x, blockPos.y, FlyweightBlock.blockDataAir);
+                _cache.GetChunk(chunkPos).GetComponent<Chunk>().SetBlock(blockPos.x, blockPos.y, FlyweightBlock.blockDataAir);
             }
 
         }

@@ -5,8 +5,9 @@ using UnityEngine;
 public abstract class IBiome
 {   
     public abstract int[]        GenerateHeightmap(Vector2 worldPos);
-    public abstract BlockData[,] GenerateBlockData(Vector2 worldPos, int[] heightmap);
-    
+    public abstract BlockData[,] GenerateBlockData(Vector2 worldPos, int[] heightmap, IBlock blendingBlock = null);
+    public abstract IBlock       GetBiomeBlockType();
+
     public struct CAMapConfig
     {
         public int mapWidth, mapHeight;
@@ -31,9 +32,8 @@ public abstract class IBiome
 
         iterations = 4,
 
-        caMin = 0.3f,
-        caMax = 0.45f,
-
+        caMin = 0.4f,
+        caMax = 0.53f
     };
 
     protected static readonly CAMapConfig defaultOreCAMapConfig = new CAMapConfig()
@@ -85,8 +85,8 @@ public abstract class IBiome
         {
             mapConfig = defaultOreCAMapConfig,
             block = FlyweightBlock.Get<BlockIron>(),
-            minDepth = - 40,
-            maxDepth = - 500,
+            minDepth = -40,
+            maxDepth = -500,
             chance   = 1.0f / 3.0f
         },
 
@@ -121,7 +121,7 @@ public abstract class IBiome
         }
 
         return blocks;
-    }
+    }   
     
     public  int[,] GenerateOreHeightmap(Vector2 worldPos, CAMapConfig config)
     {
@@ -224,14 +224,22 @@ public abstract class IBiome
             }       
         }
     }
-
+    
     public int[] BlendHeightmapData(int[] heightmap1, int[] heightmap2)
     {
         int[] blockData = new int[ChunkUtil.chunkWidth];
 
+        float weight = 0.01f;
+
         for(int i = 0; i < heightmap1.Length; i++)
-        {
-            blockData[i] = (int) ((heightmap1[i] + heightmap2[i]) / 2.0f);
+        {   
+            if(i != 0) 
+            {
+                weight = (float)i / (float)heightmap1.Length;
+            }
+
+            blockData[i] = (int) ((heightmap1[i] + (heightmap2[heightmap1.Length - i - 1] * weight)) / (1.0f + weight));
+
         }
 
         return blockData;

@@ -43,15 +43,19 @@ public class ChunkFactory
 
             IBiome biome = GetBiome(chunkPos);
 
+            chunk.name = biome.ToString();
+
             if(NeedsBiomeBlending(chunk.transform.position))
             {
                 IBiome blendingBiome = GetBlendingBiome(chunkPos);
-                blocks = biome.GenerateBlockData(chunkPos, biome.BlendHeightmapData(biome.GenerateHeightmap(chunkPos), blendingBiome.GenerateHeightmap(chunkPos)));      
+                IBlock blendBlock    = NeedsBiomeBlendingLeft(chunkPos) ? blendingBiome.GetBiomeBlockType() : null;
+
+                blocks = biome.GenerateBlockData(chunkPos, biome.BlendHeightmapData(biome.GenerateHeightmap(chunkPos), blendingBiome.GenerateHeightmap(chunkPos)), blendBlock);      
             }
             else
             {
                 blocks = biome.GenerateBlockData(chunkPos, biome.GenerateHeightmap(chunkPos));
-            }
+            }   
 
             chunk.GetComponent<Chunk>().SetBlocks(blocks, false);
         }
@@ -80,7 +84,12 @@ public class ChunkFactory
 
         return chunk;
     }
-  
+    
+    bool NeedsBiomeBlendingLeft(Vector2 worldPos)
+    {
+        return GetBiome(worldPos) != GetBiome(worldPos - new Vector2(ChunkUtil.chunkWidth, 0));
+    }
+
     bool NeedsBiomeBlending(Vector2 worldPos)
     {
         if(GetBiome(worldPos) != GetBiome(worldPos + new Vector2(ChunkUtil.chunkWidth, 0)))
@@ -89,7 +98,7 @@ public class ChunkFactory
         return GetBiome(worldPos) != GetBiome(worldPos - new Vector2(ChunkUtil.chunkWidth, 0));
     }
 
-    static int biomeLength = 4 * ChunkUtil.chunkWidth;
+    static int biomeLength = 6 * ChunkUtil.chunkWidth;
 
     private static IBiome GetBiome(Vector2 worldPos)
     {
