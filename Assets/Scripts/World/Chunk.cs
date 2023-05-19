@@ -6,15 +6,54 @@ using System;
 public class Chunk : MonoBehaviour
 {
     BlockData[,]     blocks;
-    
+    BlockData[,]     walls;
+
     float _tick = 0;
 
     void Awake()
     {   
         blocks  = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
-        
+        walls   = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+
     }
     
+    public BlockData[,] GetWalls()
+    {
+        return walls;
+    }
+
+    public BlockData GetWall(int x, int y)
+    {
+        if(ChunkUtil.IsPosValid(x, y))
+            return walls[x, y];
+        
+        return FlyweightBlock.blockDataAir;
+    }
+
+    public void SetWalls(BlockData[,] walls, bool notifyRenderer = true)
+    {
+        this.walls = walls;
+
+        if(notifyRenderer)
+        {
+            NotifyRenderer();
+        }
+    }
+
+    public void SetWall(int x, int y, BlockData wall, bool notifyRenderer = true)
+    {
+        if(!ChunkUtil.IsPosValid(x, y)) 
+            return;
+
+         walls[x, y] = wall;
+
+        if(notifyRenderer)
+        {
+            NotifyRenderer();
+        }
+    }
+
+
     public BlockData[,] GetBlocks()
     {
         return blocks;
@@ -26,7 +65,7 @@ public class Chunk : MonoBehaviour
             return blocks[x, y];
         
         return FlyweightBlock.blockDataAir;
-    }
+    }   
 
     public void SetBlocks(BlockData[,] blocks, bool notifyRenderer = true)
     {
@@ -48,14 +87,6 @@ public class Chunk : MonoBehaviour
 
         if(notifyRenderer)
         {
-            // List<int> neighboursToUpdate = new List<int>();
-
-            // if(x == 0) neighboursToUpdate.Add((int)ChunkRenderer.NeighbourIndices.Left);
-            // if(x == ChunkUtil.chunkWidth-1) neighboursToUpdate.Add((int)ChunkRenderer.NeighbourIndices.Right);
-
-            // if(y == 0) neighboursToUpdate.Add((int)ChunkRenderer.NeighbourIndices.Down);
-            // if(y == ChunkUtil.chunkHeight - 1) neighboursToUpdate.Add((int)ChunkRenderer.NeighbourIndices.Up);
-
             NotifyRenderer();
         }
     }

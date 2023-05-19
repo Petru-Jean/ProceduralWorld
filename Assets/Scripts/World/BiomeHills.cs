@@ -100,7 +100,7 @@ public class BiomeHills : IBiome
 
                 }
                 else   
-                {
+                {         
                     blocks[x,y] = FlyweightBlock.blockDataAir;
                 }
 
@@ -109,6 +109,34 @@ public class BiomeHills : IBiome
 
         //if (worldPos.y != -ChunkUtil.chunkHeight)
             GenerateOres(worldPos, blocks, defaultOreDistrib);
+
+
+        if(worldPos.y > 0)
+        {
+            // if(UnityEngine.Random.Range(0,3) == 0)
+            // {
+            //     TreeDataGenerator.Tree tree = TreeDataGenerator.Generate(worldPos, 0);
+
+            //     for(int i = 0; i < tree.height; i++)
+            //     {
+            //         blocks[16, i] = new BlockData(FlyweightBlock.Get<BlockTemp4>());
+
+            //         if(i == 0) blocks[16, 0] = new BlockData(FlyweightBlock.Get<BlockTemp4>());
+            //         if(i == tree.height - 1) blocks[16, tree.height-1] = new BlockData(FlyweightBlock.Get<BlockTemp1>());
+
+            //         for(int j = 0; j < tree.leftBranches.Count; j++)
+            //         {
+            //             blocks[15, tree.leftBranches[j]] = new BlockData(FlyweightBlock.Get<BlockTemp2>()); 
+            //         }
+
+            //         for(int j = 0; j < tree.rightBranches.Count; j++)
+            //         {
+            //             blocks[17, tree.rightBranches[j]] = new BlockData(FlyweightBlock.Get<BlockTemp3>()); 
+            //         }
+                    
+            //     }
+            // }
+        }
 
         return blocks;
     }

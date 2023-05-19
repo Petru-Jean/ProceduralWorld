@@ -26,7 +26,7 @@ public static class UvMapper
         
     }
 
-    public static Vector2[] GetUvs(int textureId, bool addTopPadding, bool addRightPadding, bool addLeftPadding, bool addBottomPadding)
+    public static Vector2[] GetUvs(int textureId, bool removeTopPadding, bool removeRightPadding, bool removeLeftPadding, bool removeBottomPadding)
     {
         if(textureId < 0 || textureId >= texCount)
             throw new UnityException("Attempt to get invalid texture [id: " + textureId + "]");
@@ -34,10 +34,10 @@ public static class UvMapper
         TextureConfiguration config = new TextureConfiguration();
         config.textureId = textureId;
 
-        config.bottomPadding = addBottomPadding;
-        config.topPadding    = addTopPadding;
-        config.leftPadding   = addLeftPadding;
-        config.rightPadding  = addRightPadding;
+        config.bottomPadding = removeBottomPadding;
+        config.topPadding    = removeTopPadding;
+        config.leftPadding   = removeLeftPadding;
+        config.rightPadding  = removeRightPadding;
 
         Vector2[] uvs;
 
@@ -56,10 +56,10 @@ public static class UvMapper
         float yDown = 1.0f - (float)((int)(textureId / texLen ) / (float)texLen) - texScale;
         float yUp   = yDown + texScale; 
 
-        uvs[0] = new Vector2(xLeft + (addLeftPadding ? padding : 0), yDown+ (addBottomPadding ? padding : 0));
-        uvs[1] = new Vector2(xRight - (addRightPadding ? padding : 0), yDown + (addBottomPadding ? padding : 0));
-        uvs[2] = new Vector2(xLeft + (addLeftPadding ? padding : 0), yUp - (addTopPadding ? padding : 0));
-        uvs[3] = new Vector2(xRight - (addRightPadding ? padding : 0), yUp - (addTopPadding ? padding : 0));
+        uvs[0] = new Vector2(xLeft + (removeLeftPadding ? padding : 0), yDown+ (removeBottomPadding ? padding : 0));
+        uvs[1] = new Vector2(xRight - (removeRightPadding ? padding : 0), yDown + (removeBottomPadding ? padding : 0));
+        uvs[2] = new Vector2(xLeft + (removeLeftPadding ? padding : 0), yUp - (removeTopPadding ? padding : 0));
+        uvs[3] = new Vector2(xRight - (removeRightPadding ? padding : 0), yUp - (removeTopPadding ? padding : 0));
 
         cache[config] = uvs;
 
