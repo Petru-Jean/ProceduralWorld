@@ -58,6 +58,15 @@ public class ChunkFactory
             }   
 
             chunk.GetComponent<Chunk>().SetBlocks(blocks, false);
+
+            BlockData[,] walls = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+
+            for(int x = 0; x < ChunkUtil.chunkWidth; x++) 
+                for(int y = 0; y < ChunkUtil.chunkHeight;y++)
+                    walls[x,y] = FlyweightBlock.blockDataAir;
+
+            chunk.GetComponent<Chunk>().SetWalls(walls, false);
+            
         }
 
         // foreach(GameObject chunk in chunks)

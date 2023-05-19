@@ -11,7 +11,8 @@ public class Hasher
         CaHash,
         OreBlockHash,
         BiomeHash,
-        BiomeBlendHash
+        BiomeBlendHash,
+        TreeHash
     };
 
     // public static float Hash(Vector2 worldPosition, HashType hashType, int iteration)
