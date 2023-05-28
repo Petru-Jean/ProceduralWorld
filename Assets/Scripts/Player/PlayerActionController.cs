@@ -18,8 +18,20 @@ public class PlayerActionController : MonoBehaviour
     {   
         RaycastHit2D hit = Physics2D.Raycast(Camera.main.ScreenToWorldPoint(Input.mousePosition), Vector2.zero);
 
-        if(hit)
+        if(hit && hit.transform.CompareTag("Chunk") == false)
         {
+            if(hit.transform.CompareTag("Tree"))
+            {
+                if(Input.GetMouseButtonDown(0))
+                {
+                    Destroy(hit.transform.gameObject);
+                }
+            }
+        }
+        else
+        {
+            hit.point = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+
             Vector2Int blockPos = Vector2Int.zero;
             Vector2Int chunkPos = Vector2Int.zero;
 
@@ -50,9 +62,13 @@ public class PlayerActionController : MonoBehaviour
 
             if(Input.GetMouseButtonDown(0))
             {
-                _cache.GetChunk(chunkPos).GetComponent<Chunk>().SetBlock(blockPos.x, blockPos.y, FlyweightBlock.blockDataAir);
-            }
+                GameObject chunkObject = _cache.GetChunk(chunkPos);
 
+                if(chunkObject == null) 
+                    return;
+
+                chunkObject.GetComponent<Chunk>().SetBlock(blockPos.x, blockPos.y, FlyweightBlock.blockAir);
+            }
         }
 
     }

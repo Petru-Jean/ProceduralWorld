@@ -4,6 +4,7 @@ using UnityEngine;
 
 public static class FlyweightBiomes
 {
-    public static BiomePlains biomePlains = new BiomePlains();
+    public static BiomePlains biomePlains  = new BiomePlains();
     public static BiomeHills  biomeHills   = new BiomeHills();
+    public static BiomeDesert biomeDesert  = new BiomeDesert();
 }

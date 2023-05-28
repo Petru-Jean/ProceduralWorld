@@ -12,7 +12,8 @@ public class Hasher
         OreBlockHash,
         BiomeHash,
         BiomeBlendHash,
-        TreeHash
+        TreeHash,
+        VegetationHash
     };
 
     // public static float Hash(Vector2 worldPosition, HashType hashType, int iteration)
@@ -24,10 +25,14 @@ public class Hasher
     Vector2  worldPos_;
     int      iteration_;
 
-    public Hasher(Vector2 worldPos, HashType hashType)
+    int seed;
+
+    public Hasher(Vector2 worldPos, HashType hashType, int seed = 69420911)
     {
         worldPos_ = worldPos;
         hashType_ = hashType;
+
+        this.seed = seed;
     }
 
     public float Next()

@@ -10,13 +10,13 @@ public static class ChunkLoader
         return File.Exists(ChunkUtil.PosToFileName(pos));
     }
 
-    public static BlockData[,] Load(Vector2 pos)
+    public static IBlock[,] Load(Vector2 pos)
     {
-        BlockData[,] blocks = null;
+        IBlock[,] blocks = null;
       
         if(Exists(pos))
         {
-            blocks = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+            blocks = new IBlock[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
 
             using(var stream = File.Open(ChunkUtil.PosToFileName(pos), FileMode.Open))
             {
@@ -33,7 +33,7 @@ public static class ChunkLoader
                             
                             IBlock block = FlyweightBlock.Get(reader.ReadUInt16());
                             
-                            blocks[x, y] = new BlockData(block);
+                            blocks[x, y] = (block);
                         }
                     }
                 }

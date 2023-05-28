@@ -10,8 +10,8 @@ public static class UvMapper
     private static int texLen = 4;
     private static int texCount = texLen * texLen; 
 
-    static float texWidth = 16.0f;
-    static float padding = (1.0f / texLen) * (2.0f / texWidth); 
+    static float texWidth = 128.0f;
+    static float padding = 16.0f / 512.0f; //0.015625f;//(1.0f / texLen) * (2.0f / texWidth); 
     
     struct TextureConfiguration
     {

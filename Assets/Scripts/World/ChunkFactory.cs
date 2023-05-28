@@ -11,10 +11,7 @@ public class ChunkFactory
     
     public ChunkFactory()
     {
-        cache_ = GameObject.Find("WorldManager").GetComponent<ChunkCache>();
-
-        if(cache_ == null)
-            throw new UnityException("You need to assign a ChunkCache component to the WorldManager gameObj");
+        cache_ = ChunkCache.GetCacheObject();
     }
 
     //First generate all chunks objects
@@ -38,34 +35,52 @@ public class ChunkFactory
 
         foreach(GameObject chunk in chunks)
         {
+            IBlock[,] loadedData = ChunkLoader.Load(chunk.transform.position);
+
+            if(loadedData != null)
+            {   
+                IBlock[,] walls1 = new IBlock[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+
+                chunk.GetComponent<Chunk>().SetBlocks(loadedData, false);
+                for(int x = 0; x < ChunkUtil.chunkWidth; x++)
+                    for(int y =0 ;y < ChunkUtil.chunkHeight;y ++)
+                        walls1[x,y] = FlyweightBlock.blockAir;
+
+                chunk.GetComponent<Chunk>().SetWalls(walls1, false);
+                continue;
+            }
+
             Vector2      chunkPos = chunk.transform.position;
-            BlockData[,] blocks   = new BlockData[ChunkUtil.chunkWidth,ChunkUtil.chunkHeight];
+            IBlock[,] blocks   = new IBlock[ChunkUtil.chunkWidth,ChunkUtil.chunkHeight];
+            
+            Chunk chunkScript     = chunk.GetComponent<Chunk>();
 
             IBiome biome = GetBiome(chunkPos);
 
             chunk.name = biome.ToString();
+
+            IBlock[,] walls = new IBlock[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+
+            for(int x = 0; x < ChunkUtil.chunkWidth; x++) 
+                for(int y = 0; y < ChunkUtil.chunkHeight;y++)
+                    walls[x,y] = FlyweightBlock.blockAir;
+
+            chunk.GetComponent<Chunk>().SetWalls(walls, false);
 
             if(NeedsBiomeBlending(chunk.transform.position))
             {
                 IBiome blendingBiome = GetBlendingBiome(chunkPos);
                 IBlock blendBlock    = NeedsBiomeBlendingLeft(chunkPos) ? blendingBiome.GetBiomeBlockType() : null;
 
-                blocks = biome.GenerateBlockData(chunkPos, biome.BlendHeightmapData(biome.GenerateHeightmap(chunkPos), blendingBiome.GenerateHeightmap(chunkPos)), blendBlock);      
+                blocks = biome.GenerateBlockData(chunkScript, chunkPos, biome.BlendHeightmapData(biome.GenerateHeightmap(chunkPos), blendingBiome.GenerateHeightmap(chunkPos)), blendBlock);      
             }
             else
             {
-                blocks = biome.GenerateBlockData(chunkPos, biome.GenerateHeightmap(chunkPos));
+                blocks = biome.GenerateBlockData(chunkScript, chunkPos, biome.GenerateHeightmap(chunkPos));
             }   
 
             chunk.GetComponent<Chunk>().SetBlocks(blocks, false);
 
-            BlockData[,] walls = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
-
-            for(int x = 0; x < ChunkUtil.chunkWidth; x++) 
-                for(int y = 0; y < ChunkUtil.chunkHeight;y++)
-                    walls[x,y] = FlyweightBlock.blockDataAir;
-
-            chunk.GetComponent<Chunk>().SetWalls(walls, false);
             
         }
 
@@ -74,8 +89,8 @@ public class ChunkFactory
         //     chunk.GetComponent<ChunkRenderer>().UpdateMesh();
         // }
 
-        // if(Time.realtimeSinceStartup - time >= 0.01f)
-        //     Debug.Log(Time.realtimeSinceStartup - time);
+        if(Time.realtimeSinceStartup - time >= 0.001f)
+            Debug.Log(Time.realtimeSinceStartup - time);
 
         return chunks;
 
@@ -91,6 +106,8 @@ public class ChunkFactory
         chunk.AddComponent<ChunkRenderer>();
         chunk.AddComponent<Chunk>();
 
+        chunk.transform.tag = "Chunk";
+        
         return chunk;
     }
     
@@ -115,7 +132,11 @@ public class ChunkFactory
 
         int divs = (int) worldPos.x / biomeLength;
 
-        return divs % 2 == 0 ? FlyweightBiomes.biomeHills : FlyweightBiomes.biomePlains; 
+        if(divs == 0) return FlyweightBiomes.biomeHills;
+        if(divs == 1) return FlyweightBiomes.biomePlains;
+        else return FlyweightBiomes.biomeDesert;
+
+        //return divs % 2 == 0 ? FlyweightBiomes.biomeHills : FlyweightBiomes.biomePlains; 
     }
 
     IBiome GetBlendingBiome(Vector2 worldPos)

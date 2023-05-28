@@ -61,10 +61,21 @@ public class ChunkCache : MonoBehaviour
         if(!cache_.ContainsKey(chunk)) 
             return;
 
+        ChunkSaver.Save(chunk, cache_[chunk].GetComponent<Chunk>());
+
         Destroy(cache_[chunk].gameObject);
+
         cache_.Remove(chunk);
     }
 
+    void OnApplicationQuit()
+    {
+        foreach(Vector2 chunk in cache_.Keys)
+        {
+            ChunkSaver.Save(chunk, cache_[chunk].GetComponent<Chunk>());
+        }
+
+    }
 
     public bool Contains(Vector2 chunk)
     {

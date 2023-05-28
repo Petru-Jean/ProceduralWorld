@@ -1,12 +1,15 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.IO;
 
 public static class FlyweightBlock
 {   
     private static Dictionary<System.Type, IBlock>    blockCache;
     private static Dictionary<System.Type, ushort>    typeIdCache;
     private static Dictionary<ushort, System.Type>    idTypeCache;
+    
+    private static ushort lastId = 0;
 
     static FlyweightBlock()
     {
@@ -14,12 +17,33 @@ public static class FlyweightBlock
         typeIdCache  = new Dictionary<System.Type, ushort>();
         idTypeCache  = new Dictionary<ushort, System.Type>();
 
-        AddTypeIdPair(typeof(BlockAir),   0);
-        AddTypeIdPair(typeof(BlockDirt),  1);
-        AddTypeIdPair(typeof(BlockGrass), 2);
-        AddTypeIdPair(typeof(BlockStone), 3);
-        AddTypeIdPair(typeof(BlockGold),  4);
-        AddTypeIdPair(typeof(BlockDirt),  5);
+        if(!File.Exists("Blocks.txt"))
+        {
+            File.Create("Blocks.txt").Close();
+        }
+
+        foreach(string row in File.ReadLines("Blocks.txt"))
+        {
+            string[] data = row.Split(" ");
+            
+            if(data.Length != 2)
+            {
+                Debug.LogError("Corrupt block-id map data");
+                break;
+            }
+
+            System.Type type = System.Type.GetType(data[0]);
+            lastId           = ushort.Parse(data[1]);
+
+            AddTypeIdPair(type, lastId);
+        }
+
+        // AddTypeIdPair(typeof(BlockAir),   0);
+        // AddTypeIdPair(typeof(BlockDirt),  1);
+        // AddTypeIdPair(typeof(BlockGrassWeed), 2);
+        // AddTypeIdPair(typeof(BlockStone), 3);
+        // AddTypeIdPair(typeof(BlockGold),  4);
+        // AddTypeIdPair(typeof(BlockDirt),  5);
     }
     
     private static void AddTypeIdPair(System.Type T, ushort id)
@@ -61,7 +85,7 @@ public static class FlyweightBlock
             }
         }
 
-        return Get<BlockAir>();
+        return blockAir;
     }
 
     public static ushort GetId(IBlock block)
@@ -70,12 +94,21 @@ public static class FlyweightBlock
         
         if(typeIdCache.TryGetValue(block.GetType(), out id))
         {
-            
             return id;
         }
+        else
+        {  
+            using (StreamWriter sw = !File.Exists("Blocks.txt") ?  File.CreateText("Blocks.txt") : File.AppendText("Blocks.txt"))
+            {
+                lastId++;
 
-        Debug.Log("id not found" + block.GetType());
-        return 0;
+                sw.WriteLine(block.GetType() + " " + lastId);
+                AddTypeIdPair(block.GetType(), lastId);
+
+                return lastId;
+            }
+        }
+        
     }
 
     public static ushort GetId<T>() where T : IBlock
@@ -86,10 +119,20 @@ public static class FlyweightBlock
         {
             return id;
         }
+        else
+        {  
+            using (StreamWriter sw = !File.Exists("Blocks.txt") ?  File.CreateText("Blocks.txt") : File.AppendText("Blocks.txt"))
+            {
+                lastId++;
 
-        // Debug.Log(id);
-        return 0;
+                sw.WriteLine(typeof(T) + " " + lastId);
+                AddTypeIdPair(typeof(T), lastId);
+
+                return lastId;
+            }
+        }
+
     }
 
-    public static BlockData blockDataAir = new BlockData(new BlockAir());
+    public static readonly IBlock blockAir = new BlockAir();
 }

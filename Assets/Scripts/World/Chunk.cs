@@ -5,32 +5,42 @@ using System;
 
 public class Chunk : MonoBehaviour
 {
-    BlockData[,]     blocks;
-    BlockData[,]     walls;
+    IBlock[,]     blocks;
+    IBlock[,]     walls;
+
+    List<GameObject> trees;
 
     float _tick = 0;
 
+
     void Awake()
     {   
-        blocks  = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
-        walls   = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+        blocks  = new IBlock[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+        walls   = new IBlock[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+
+        trees = new List<GameObject>();
 
     }
     
-    public BlockData[,] GetWalls()
+    public void RegisterTree(GameObject treeObject)
+    {
+        trees.Add(treeObject);
+    }
+
+    public IBlock[,] GetWalls()
     {
         return walls;
     }
 
-    public BlockData GetWall(int x, int y)
+    public IBlock GetWall(int x, int y)
     {
         if(ChunkUtil.IsPosValid(x, y))
             return walls[x, y];
         
-        return FlyweightBlock.blockDataAir;
+        return FlyweightBlock.blockAir;
     }
 
-    public void SetWalls(BlockData[,] walls, bool notifyRenderer = true)
+    public void SetWalls(IBlock[,] walls, bool notifyRenderer = true)
     {
         this.walls = walls;
 
@@ -40,7 +50,7 @@ public class Chunk : MonoBehaviour
         }
     }
 
-    public void SetWall(int x, int y, BlockData wall, bool notifyRenderer = true)
+    public void SetWall(int x, int y, IBlock wall, bool notifyRenderer = true)
     {
         if(!ChunkUtil.IsPosValid(x, y)) 
             return;
@@ -54,20 +64,20 @@ public class Chunk : MonoBehaviour
     }
 
 
-    public BlockData[,] GetBlocks()
+    public IBlock[,] GetBlocks()
     {
         return blocks;
     }
 
-    public BlockData GetBlock(int x, int y)
+    public IBlock GetBlock(int x, int y)
     {
         if(ChunkUtil.IsPosValid(x, y))
             return blocks[x, y];
         
-        return FlyweightBlock.blockDataAir;
+        return FlyweightBlock.blockAir;
     }   
 
-    public void SetBlocks(BlockData[,] blocks, bool notifyRenderer = true)
+    public void SetBlocks(IBlock[,] blocks, bool notifyRenderer = true)
     {
         this.blocks = blocks;
 
@@ -78,7 +88,7 @@ public class Chunk : MonoBehaviour
             
     }
 
-    public void SetBlock(int x, int y, BlockData block, bool notifyRenderer = true)
+    public void SetBlock(int x, int y, IBlock block, bool notifyRenderer = true)
     {
         if(!ChunkUtil.IsPosValid(x, y)) 
             return;
@@ -148,8 +158,13 @@ public class Chunk : MonoBehaviour
     }
 
     void OnDestroy()
-    {
-        ChunkSaver.Save(new Vector2Int((int)transform.position.x, (int)transform.position.y), this);
+    { 
+        //ChunkSaver.Save(new Vector2Int((int)transform.position.x, (int)transform.position.y), this);
+
+        foreach(GameObject tree in trees)
+        {
+            Destroy(tree);
+        }
     }
 
 
