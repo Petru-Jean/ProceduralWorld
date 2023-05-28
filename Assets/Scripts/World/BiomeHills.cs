@@ -22,9 +22,9 @@ public class BiomeHills : IBiome
             float noise = 0;
 
             float x1 = worldPos.x + x;
-            noise = Mathf.PerlinNoise((float)x1 / 1024.0f,          0.0f);
-            noise += 0.5f * Mathf.PerlinNoise((float)x1 / 128.0f,   0.0f);
-            noise += 0.25f * Mathf.PerlinNoise((float)x1 / 16.0f, 0.0f);
+            noise = ChunkUtil.PerlinNoise((float)x1 / 1024.0f);
+            noise += 0.5f * ChunkUtil.PerlinNoise((float)x1 / 128.0f);
+            noise += 0.25f * ChunkUtil.PerlinNoise((float)x1 / 16.0f);
 
             noise = (noise / (1.0f + 0.5f + 0.25f)) * biomeMaxHeight;
 
@@ -34,21 +34,28 @@ public class BiomeHills : IBiome
         return heightmap;
     }
 
-    public override BlockData[,] GenerateBlockData(Vector2 worldPos, int[] heightmap, IBlock blendingBlock = null)
+    public override IBlock[,] GenerateBlockData(Chunk chunk, Vector2 worldPos, int[] heightmap, IBlock blendingBlock = null)
     {
-        BlockData[,] blocks = new BlockData[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+        IBlock[,] blocks = new IBlock[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
+        IBlock[,] walls  = new IBlock[ChunkUtil.chunkWidth, ChunkUtil.chunkHeight];
 
         int[,] map = GenerateCaveHeightmap(worldPos, defaultCaveCAMapConfig);
 
-        Hasher hasher = new Hasher(worldPos, Hasher.HashType.BiomeBlendHash);
+        Hasher hasher   = new Hasher(worldPos, Hasher.HashType.BiomeBlendHash);
+        Hasher treeHash = new Hasher(worldPos, Hasher.HashType.TreeHash);
+        Hasher vegetationHash = new Hasher(worldPos, Hasher.HashType.VegetationHash);
+
+        int leftTreex = int.MinValue;
 
         for(int x = 0; x < ChunkUtil.chunkWidth; x++)
         {
             for(int y = 0; y < ChunkUtil.chunkHeight; y++)
             { 
+                blocks[x,y] = FlyweightBlock.blockAir;
+
                 if(worldPos.y == 0)
                 {
-                    blocks[x,y] = y <= heightmap[x]? new BlockData(FlyweightBlock.Get<BlockDirt>()) : FlyweightBlock.blockDataAir;
+                    blocks[x,y] = y <= heightmap[x] ? FlyweightBlock.Get<BlockDirt>() : FlyweightBlock.blockAir;
 
                     if(blendingBlock != null && y<= heightmap[x])
                     {
@@ -56,25 +63,42 @@ public class BiomeHills : IBiome
 
                         if(hasher.Next() <= horizontalBlendChance)
                         {
-                            blocks[x,y] = new BlockData(blendingBlock);
+                            blocks[x,y] = blendingBlock;
                         } 
                     }
 
+                    if(x > 0 && x < ChunkUtil.chunkWidth - 1 && x >= leftTreex + 9)
+                    {
+                        if((y-1 <= heightmap[x-1] && y > heightmap[x-1]) && (y-1 <= heightmap[x] && y > heightmap[x]) && (y-1 <= heightmap[x+1] && y > heightmap[x+1]))
+                        {
+                            if(treeHash.Next() <= 0.1f)
+                            {
+                                GameObject treeObj = GameObject.Instantiate((GameObject) Resources.Load("Textures/Tree"), new Vector3(worldPos.x + x + 0.5f, worldPos.y + y + 4.15f, 1), Quaternion.identity);
+                                treeObj.transform.tag = "Tree";
+                                treeObj.layer         = LayerMask.NameToLayer("Foreground"); //"Foreground";
+                                chunk.RegisterTree(treeObj);
+                                
+                                leftTreex = x;
+                            }                  
+                        }
+                    }
+                    
                 }   
                 else if (worldPos.y == -ChunkUtil.chunkHeight)
                 {
-                    blocks[x,y] = new BlockData(FlyweightBlock.Get<BlockDirt>());
+                    blocks[x,y] = FlyweightBlock.Get<BlockDirt>();
                     
                     if(map[x, y] == 1)
                     {
-                        blocks[x,y] = FlyweightBlock.blockDataAir;
+                        blocks[x,y] = FlyweightBlock.blockAir;
+                        chunk.SetWall(x,y, FlyweightBlock.Get<BlockWallDirt>(), false);
                     }   
 
                     float verticalBlendChance = 1.0f - (float) ((float)y / (float)ChunkUtil.chunkHeight);
 
                     if(hasher.Next() <= verticalBlendChance)
                     {
-                        blocks[x,y] = new BlockData(FlyweightBlock.Get<BlockStone>());
+                        blocks[x,y] = FlyweightBlock.Get<BlockStone>();
                     } 
 
                     if(blendingBlock != null)
@@ -85,58 +109,54 @@ public class BiomeHills : IBiome
 
                         if(hasher.Next() <= horizontalBlendChance)
                         {
-                            blocks[x,y] = new BlockData(blendingBlock);
+                            blocks[x,y] = blendingBlock;
                         } 
                     }
                 }
                 else if(worldPos.y < 0)
                 {
-                    blocks[x,y] = new BlockData(FlyweightBlock.Get<BlockStone>());
+                    blocks[x,y] = FlyweightBlock.Get<BlockStone>();
 
                     if(map[x, y] == 1)
                     {
-                        blocks[x,y] = FlyweightBlock.blockDataAir;
+                        blocks[x,y] = FlyweightBlock.blockAir;
+                        chunk.SetWall(x,y, FlyweightBlock.Get<BlockWallDirt>(), false);
                     }   
 
                 }
                 else   
                 {         
-                    blocks[x,y] = FlyweightBlock.blockDataAir;
+                    blocks[x,y] = FlyweightBlock.blockAir;
                 }
 
             }
         }
 
-        //if (worldPos.y != -ChunkUtil.chunkHeight)
-            GenerateOres(worldPos, blocks, defaultOreDistrib);
+        if(worldPos.y == 0)
+        {          
+            for(int x = 0; x < ChunkUtil.chunkWidth; x++)
+            {
+                int y = ChunkUtil.chunkHeight - 1;
+                
+                bool hasGrass    = vegetationHash.Next() <= 0.25f;
+                bool defaultType = vegetationHash.Next() >= 0.5f;
 
+                while(y > 0 && hasGrass)
+                {
+                    if(blocks[x, y-1] != FlyweightBlock.blockAir)
+                    {
+                        blocks[x, y] = defaultType ? FlyweightBlock.Get<BlockGrassWeed>() : FlyweightBlock.Get<BlockFlower>();    
+                        break; 
+                    }
 
-        if(worldPos.y > 0)
-        {
-            // if(UnityEngine.Random.Range(0,3) == 0)
-            // {
-            //     TreeDataGenerator.Tree tree = TreeDataGenerator.Generate(worldPos, 0);
-
-            //     for(int i = 0; i < tree.height; i++)
-            //     {
-            //         blocks[16, i] = new BlockData(FlyweightBlock.Get<BlockTemp4>());
-
-            //         if(i == 0) blocks[16, 0] = new BlockData(FlyweightBlock.Get<BlockTemp4>());
-            //         if(i == tree.height - 1) blocks[16, tree.height-1] = new BlockData(FlyweightBlock.Get<BlockTemp1>());
-
-            //         for(int j = 0; j < tree.leftBranches.Count; j++)
-            //         {
-            //             blocks[15, tree.leftBranches[j]] = new BlockData(FlyweightBlock.Get<BlockTemp2>()); 
-            //         }
-
-            //         for(int j = 0; j < tree.rightBranches.Count; j++)
-            //         {
-            //             blocks[17, tree.rightBranches[j]] = new BlockData(FlyweightBlock.Get<BlockTemp3>()); 
-            //         }
-                    
-            //     }
-            // }
+                    y--;
+                }
+                
+            }
         }
+
+        //if (worldPos.y != -ChunkUtil.chunkHeight)
+        GenerateOres(worldPos, blocks, defaultOreDistrib);
 
         return blocks;
     }

@@ -5,7 +5,7 @@ using UnityEngine;
 public abstract class IBiome
 {   
     public abstract int[]        GenerateHeightmap(Vector2 worldPos);
-    public abstract BlockData[,] GenerateBlockData(Vector2 worldPos, int[] heightmap, IBlock blendingBlock = null);
+    public abstract IBlock[,]    GenerateBlockData(Chunk chunk, Vector2 worldPos, int[] heightmap, IBlock blendingBlock = null);
     public abstract IBlock       GetBiomeBlockType();
 
     public struct CAMapConfig
@@ -43,8 +43,8 @@ public abstract class IBiome
 
         iterations = 6,
 
-        caMin = 0.55f,
-        caMax = 0.75f
+        caMin = 0.50f,
+        caMax = 0.70f
     };
     
     protected List<OreBlockConfig> defaultOreDistrib = new List<OreBlockConfig>()
@@ -188,7 +188,7 @@ public abstract class IBiome
         return GenerateCAMap(config, blocks);
     }
     
-    public void GenerateOres(Vector2 worldPos, BlockData[,] blocks, List<OreBlockConfig> oreDistribution)
+    public void GenerateOres(Vector2 worldPos, IBlock[,] blocks, List<OreBlockConfig> oreDistribution)
     {        
         Hasher hasher       = new Hasher(worldPos, Hasher.HashType.OreBlockHash);
         
@@ -214,7 +214,7 @@ public abstract class IBiome
                     {
                         if(goldOreMap[i, j] == 1)
                         {
-                            blocks[goldBlockPos.x + i, goldBlockPos.y + j] = new BlockData(oreDistrib.block);
+                            blocks[goldBlockPos.x + i, goldBlockPos.y + j] = oreDistrib.block;
                         }
                     }
                 } 
@@ -227,7 +227,7 @@ public abstract class IBiome
     
     public int[] BlendHeightmapData(int[] heightmap1, int[] heightmap2)
     {
-        int[] blockData = new int[ChunkUtil.chunkWidth];
+        int[] heightmap = new int[ChunkUtil.chunkWidth];
 
         float weight = 0.01f;
 
@@ -238,10 +238,10 @@ public abstract class IBiome
                 weight = (float)i / (float)heightmap1.Length;
             }
 
-            blockData[i] = (int) ((heightmap1[i] + (heightmap2[heightmap1.Length - i - 1] * weight)) / (1.0f + weight));
+            heightmap[i] = (int) ((heightmap1[i] + (heightmap2[heightmap1.Length - i - 1] * weight)) / (1.0f + weight));
 
         }
 
-        return blockData;
+        return heightmap;
     }
 }

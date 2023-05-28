@@ -88,13 +88,16 @@ public class ChunkRenderer : MonoBehaviour
 
     private void Polygonize(int x, int y)
     {   
-        bool isWall = _chunk.GetWall(x,y).block.GetType() != typeof(BlockAir);
-        bool isBlock = _chunk.GetBlock(x,y).block.GetType() != typeof(BlockAir);
+        bool isWall = _chunk.GetWall(x,y).GetType() != typeof(BlockAir);
+        bool isBlock = _chunk.GetBlock(x,y).GetType() != typeof(BlockAir);
     
         if(!isWall && !isBlock) 
             return;    
 
-        if(isBlock)
+        IBlock currBlock = _chunk.GetBlock(x,y);
+        IBlock currWall  = _chunk.GetWall(x,y);
+
+        if(isBlock && currBlock.HasCollider())
            colliderShapeGroup.AddBox(new Vector2(x + 0.5f, y + 0.5f), Vector2.one);
 
         int vertIndex = _vertices.Count;
@@ -114,47 +117,44 @@ public class ChunkRenderer : MonoBehaviour
         
         float time = Time.realtimeSinceStartup;
 
-        IBlock currBlock = _chunk.GetBlock(x,y).block;
-        IBlock currWall  = _chunk.GetWall(x,y).block;
-
         IBlock leftBlock, rightBlock, topBlock, bottomBlock;
         
-        rightBlock  =  _chunk.GetBlock(x+1, y).block;// :   _chunk.GetWall(x+1, y).block;
-        leftBlock   =  _chunk.GetBlock(x-1, y).block;// :   _chunk.GetWall(x-1, y).block;
-        topBlock    =  _chunk.GetBlock(x,   y+1).block;// : _chunk.GetWall(x,   y+1).block;
-        bottomBlock =  _chunk.GetBlock(x,   y-1).block;// : _chunk.GetWall(x,   y-1).block;
+        rightBlock  =  _chunk.GetBlock(x+1, y);// :   _chunk.GetWall(x+1, y).block;
+        leftBlock   =  _chunk.GetBlock(x-1, y);// :   _chunk.GetWall(x-1, y).block;
+        topBlock    =  _chunk.GetBlock(x,   y+1);// : _chunk.GetWall(x,   y+1).block;
+        bottomBlock =  _chunk.GetBlock(x,   y-1);// : _chunk.GetWall(x,   y-1).block;
 
         if(x + 1 >= ChunkUtil.chunkWidth && neighbours[1] != null)
         {
-            rightBlock = neighbours[1].GetComponent<Chunk>().GetBlock(0,y).block;// : neighbours[1].GetComponent<Chunk>().GetWall(0,y).block;
+            rightBlock = neighbours[1].GetComponent<Chunk>().GetBlock(0,y);// : neighbours[1].GetComponent<Chunk>().GetWall(0,y).block;
         }
 
         if(x - 1 < 0 && neighbours[3] != null)
         {
-            leftBlock = neighbours[3].GetComponent<Chunk>().GetBlock(ChunkUtil.chunkWidth-1, y).block;// : neighbours[3].GetComponent<Chunk>().GetWall(ChunkUtil.chunkWidth-1, y).block;
+            leftBlock = neighbours[3].GetComponent<Chunk>().GetBlock(ChunkUtil.chunkWidth-1, y);// : neighbours[3].GetComponent<Chunk>().GetWall(ChunkUtil.chunkWidth-1, y).block;
         }
 
         if(y + 1 >= ChunkUtil.chunkHeight && neighbours[0] != null)
         {
-            topBlock = neighbours[0].GetComponent<Chunk>().GetBlock(x,0).block;// : neighbours[0].GetComponent<Chunk>().GetWall(x,0).block;
+            topBlock = neighbours[0].GetComponent<Chunk>().GetBlock(x,0);// : neighbours[0].GetComponent<Chunk>().GetWall(x,0).block;
         }
 
         else if(y - 1 < 0 && neighbours[2] != null)
         {
-            bottomBlock = neighbours[2].GetComponent<Chunk>().GetBlock(x,ChunkUtil.chunkHeight-1).block;/// : neighbours[2].GetComponent<Chunk>().GetWall(x,ChunkUtil.chunkHeight-1).block;
+            bottomBlock = neighbours[2].GetComponent<Chunk>().GetBlock(x,ChunkUtil.chunkHeight-1);/// : neighbours[2].GetComponent<Chunk>().GetWall(x,ChunkUtil.chunkHeight-1).block;
         }
 
-        bool removeTopPadding      = topBlock    != FlyweightBlock.blockDataAir.block;
-        bool removeRightPadding    = rightBlock  != FlyweightBlock.blockDataAir.block;
-        bool removeLeftPadding     = leftBlock   != FlyweightBlock.blockDataAir.block;
-        bool removeBottomPadding   = bottomBlock != FlyweightBlock.blockDataAir.block;
+        bool removeTopPadding      = topBlock    != FlyweightBlock.blockAir && !topBlock.ForcePadding();
+        bool removeRightPadding    = rightBlock  != FlyweightBlock.blockAir && !rightBlock.ForcePadding();;
+        bool removeLeftPadding     = leftBlock   != FlyweightBlock.blockAir && !leftBlock.ForcePadding();;
+        bool removeBottomPadding   = bottomBlock != FlyweightBlock.blockAir && !bottomBlock.ForcePadding();;
 
         Vector2[] uvs;
-        
+
         if(isBlock)
             uvs = UvMapper.GetUvs(currBlock.TextureId(), removeTopPadding, removeRightPadding, removeLeftPadding, removeBottomPadding);
         else    
-            uvs = UvMapper.GetUvs(currWall.TextureId(), true, true, true, true);
+            uvs = UvMapper.GetUvs(currWall.TextureId(), false, false, false, false);
 
         for(int i = 0; i < 4; i++)
         {

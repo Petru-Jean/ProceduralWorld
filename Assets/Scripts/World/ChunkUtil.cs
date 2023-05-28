@@ -4,9 +4,14 @@ using UnityEngine;
 
 public static class ChunkUtil
 {   
-    public const string worldDataPath  = "saves/data/";   
-    public const string blockIdMapPath = "blockIdMap.xml";
+    public static string savePath      = "saves/";
     
+    public static string WorldDataPath 
+    {
+        get { return savePath + WorldSettings.WorldName + "/"; }
+    }  
+
+    public const string blockIdMapPath = "blockIdMap.xml";
     
     public const int chunkWidth  = 32;
     public const int chunkHeight = 32;
@@ -78,18 +83,20 @@ public static class ChunkUtil
 
     public static string PosToFileName(Vector2 worldPos)
     {
-        return worldDataPath + "[" + worldPos.x + "," + worldPos.y + "]";
+        return WorldDataPath + "[" + worldPos.x + "," + worldPos.y + "]";
     }
 
     [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
     public static float Rand(Vector4 vect)
     {
         unsafe {
-            byte[] data = new byte[sizeof(float)*4];         
+            byte[] data = new byte[sizeof(float)*5]; 
+
             System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.x ), 0, data, 0,  4 );
             System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.y ), 0, data, 4,  4 );
             System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.z ), 0, data, 8,  4 );
             System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.w ), 0, data, 12, 4 );
+            System.Buffer.BlockCopy( System.BitConverter.GetBytes(WorldSettings.Seed), 0, data, 16, 4);
 
             fixed (byte* bytes = &data[0])
             {
@@ -98,57 +105,12 @@ public static class ChunkUtil
 
         }
     }
+
+    public static float PerlinNoise(float x)
+    {
+        return Mathf.PerlinNoise(x, (float) WorldSettings.Seed);
+    }
     
-    // iteration based so no need for vector 2 input every call
-    // perfromance same as above, don't use specifically
-
-    // [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-    // public static float Rand(int value, uint seed)
-    // {
-
-    //     // unsafe {
-    //     //     byte[] data = new byte[sizeof(float)*4];         
-    //     //     System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.x ), 0, data, 0,  4 );
-    //     //     System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.y ), 0, data, 4,  4 );
-    //     //     System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.z ), 0, data, 8,  4 );
-    //     //     System.Buffer.BlockCopy( System.BitConverter.GetBytes( vect.w ), 0, data, 12, 4 );
-
-    //     //     fixed (byte* bytes = &data[0])
-    //     //     {
-    //     //         return (float)Unity.Core.XXHash.Hash32(bytes, data.Length) / (float)System.UInt32.MaxValue;
-    //     //     }
-
-    //     // }
-
-    //     byte[] bytes = System.BitConverter.GetBytes(value);
-    //     if (System.BitConverter.IsLittleEndian)
-    //         System.Array.Reverse(bytes);
-
-    //     unsafe
-    //     {
-    //         fixed(byte* bytePtr = &bytes[0])
-    //         {
-    //             return (float)Unity.Core.XXHash.Hash32(bytePtr, bytes.Length, seed) / (float)System.UInt32.MaxValue;
-    //         }
-    //     }
-
-    // }
-
-
-    // [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-    // public static uint SeedFromPos(Vector2 pos)
-    // {
-    //     unsafe 
-    //     {
-    //         byte[] data = new byte[sizeof(float)*4];         
-    //         System.Buffer.BlockCopy( System.BitConverter.GetBytes( pos.x ), 0, data, 0,  4 );
-    //         System.Buffer.BlockCopy( System.BitConverter.GetBytes( pos.y ), 0, data, 4,  4 );
-
-    //         fixed (byte* bytes = &data[0])
-    //         {
-    //             return Unity.Core.XXHash.Hash32(bytes, data.Length);
-    //         }
-    //     }
-    // }   
+    
 
 }   
