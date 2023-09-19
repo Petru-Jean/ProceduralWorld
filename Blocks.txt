@@ -1,9 +1,0 @@
-BlockDirt 1
-BlockFlower 2
-BlockAir 3
-BlockGrassWeed 4
-BlockStone 5
-BlockIron 6
-BlockSand 7
-BlockCactus 8
-BlockGold 9
