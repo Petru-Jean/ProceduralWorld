@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WorldSettings : MonoBehaviour
+public class WorldSettings
 {
     private static int    seed;
     private static string worldName;
@@ -22,12 +22,5 @@ public class WorldSettings : MonoBehaviour
         seed      = newName.GetHashCode() / 1024;
         worldName = newName;
     }
-
-    void Awake()
-    {
-        // Debug.Log("Started world with seed " + seed + " and name: " + worldName);
-    }
-
-
 
 }

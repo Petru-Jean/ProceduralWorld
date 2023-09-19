@@ -2,82 +2,123 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[RequireComponent(typeof(Rigidbody2D), typeof(BoxCollider2D))]
+[RequireComponent(typeof(Rigidbody2D), typeof(EntityScript))]
 public class PlayerMovementController : MonoBehaviour
 {
-    public enum PlayerState
+    public enum PlayerState : int
     {
-        Grounded,
-        Walking,
-        Jumping,
-        Falling
+        Grounded = 0,
+        Walking  = 1, 
+        Jumping  = 2,
+        Falling  = 3
     };
 
-    [SerializeField]
-    PlayerState playerState_;
-
     [SerializeField] 
-    float       moveSpeed_ = 5.0f;
-    
-    float       jumpSpeed_ = 120.0f;
+    Collider2D groundCheck;
 
-    Rigidbody2D       rigidbody_;
-    SpriteRenderer  spriteRenderer_;
-    Animator        animator_;
-    
+    Entity entity;
+
+    Rigidbody2D      rigidbody2d;
+    SpriteRenderer   spriteRenderer;
+    Animator         animator;
+
+    PlayerState playerState;
+
+    float       moveSpeed = 5.0f;
+    float       jumpSpeed = 5.0f;
+    float       fallSpeed = 10.0f;
+
+    float       horizontalAxis = 0.0f;
+
+    Vector2     lastPos;
+
     void Awake()
     {
-        rigidbody_      = GetComponent<Rigidbody2D>();
-        animator_       = GetComponent<Animator>();
-        spriteRenderer_ = GetComponent<SpriteRenderer>();
+        rigidbody2d    = GetComponent<Rigidbody2D>();
+        animator       = GetComponent<Animator>();
+        spriteRenderer = GetComponent<SpriteRenderer>();
 
-        playerState_ = PlayerState.Grounded;
-       
-    }   
+        playerState = PlayerState.Grounded;
+        entity      = GetComponent<EntityScript>().Entity;
+
+    }
+
+    private void Start()
+    {
+        lastPos = transform.position;
+    }
 
     void Update()
-    { 
-        if(Mathf.Approximately(rigidbody_.velocity.y, 0))
-        {
-            playerState_ = PlayerState.Grounded;
+    {
+        horizontalAxis = Input.GetAxis("Horizontal");
 
-            if(Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.D))
+        List<Collider2D> colliders = new List<Collider2D>();
+
+        groundCheck.GetContacts(colliders);  
+
+        // Check if player doesn't collide with any surface
+        if(colliders.Count == 0) 
+        {
+            if(playerState != PlayerState.Jumping || rigidbody2d.velocity.y <= 0)
             {
-                playerState_ = PlayerState.Walking;
+                playerState = PlayerState.Falling;
             }
         }
         else
         {
-            playerState_ = rigidbody_.velocity.y < 0 ? PlayerState.Falling : PlayerState.Jumping;
-        }
-
-        //  animator_.SetInteger("PlayerState", (int)playerState_);
-
-        if(Input.GetKey(KeyCode.A))
-        {
-            rigidbody_.MovePosition(transform.position + Vector3.left * moveSpeed_ * Time.deltaTime);
-
-            spriteRenderer_.flipX = true;
-        }
-        
-        if(Input.GetKey(KeyCode.D))
-        {
-            rigidbody_.MovePosition(transform.position + Vector3.right * moveSpeed_ * Time.deltaTime);
-
-            spriteRenderer_.flipX = false;
-        }
-            
-        if(Input.GetKeyDown(KeyCode.Space))
-        {
-            if(playerState_ != PlayerState.Falling && playerState_ != PlayerState.Jumping)
+            if(playerState == PlayerState.Falling)
             {
-                rigidbody_.MovePosition(transform.position + Vector3.up * jumpSpeed_ * Time.deltaTime);
+                float fallDistance = (lastPos.y - transform.position.y);
+                entity.OnEntityFall(fallDistance);
             }
-        }   
+            else
+            {
+                lastPos = transform.position;
+            }
+
+            if(playerState != PlayerState.Jumping)
+            {
+                playerState = horizontalAxis != 0 ? PlayerState.Walking : PlayerState.Grounded;
+
+                if(Input.GetKeyDown(KeyCode.Space))
+                {
+                    playerState = PlayerState.Jumping;
+                }
+            }
+
+        }
+
+        animator.SetInteger("PlayerState", (int)playerState);
+
+        if(horizontalAxis > 0)      spriteRenderer.flipX = false;
+        else if(horizontalAxis < 0) spriteRenderer.flipX = true;
     }
+
+    float fallLerp = 0;
+    float jumpLerp = 0;
 
     void FixedUpdate()
     {
+        if(playerState == PlayerState.Walking)
+        {
+            rigidbody2d.velocity = new Vector2(moveSpeed * horizontalAxis, 0);
+        }
+        else if (playerState == PlayerState.Falling)
+        {
+            rigidbody2d.velocity = new Vector2(moveSpeed * horizontalAxis,  -Mathf.Lerp(fallSpeed/2, fallSpeed, fallLerp / 50.0f));
+        }
+        else if (playerState == PlayerState.Jumping)
+        {
+            rigidbody2d.velocity = new Vector2(moveSpeed * horizontalAxis, Mathf.Lerp(jumpSpeed, 0, jumpLerp / 25.0f));
+        }
+        else
+        {
+            rigidbody2d.velocity = Vector2.zero;
+        }
+
+        fallLerp = playerState == PlayerState.Falling ? (fallLerp + 1) : 0;
+        jumpLerp = playerState == PlayerState.Jumping ? (jumpLerp + 1) : 0;
 
     }
+
 }
