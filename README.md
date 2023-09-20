@@ -3,9 +3,8 @@ Side-scroller survival game set in a procedurally generated world.
 
 # Key Concepts 
 
-The game consists of a player that can move freely around a procedurally generated 2d map and modify it by placing or removing blocks. 
-The map is split into multiple Chunks and each Chunk consists of multiple blocks. 
-A Block is the structure that inherits the IBlock interface and can have unique proprieties.
+The game consists of a player that can move freely around a procedurally generated 2d map and modify it by placing or removing Blocks. 
+The map is split into multiple Chunks and each Chunk consists of multiple Blocks. 
 
 The surface of the map is generated using layered 3D Perlin Noise, where the third coordinate is the seed of the map.
 
@@ -18,8 +17,6 @@ The main parts of the Chunk GameObject are as follows:
 ChunkData     -> acts as the model component, stores block data for each chunk and allows it to be modified
 
 ChunkRenderer -> creates and updates the visual mesh for each chunk 
-
-Blocks are assigned using the factory object called FlyweightBlock.
 
 For updating the map, the PlayerMapUpdater script calculates wether the needed chunks exist and removes the ones that are too far away.
 
