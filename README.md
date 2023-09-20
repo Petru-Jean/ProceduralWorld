@@ -4,7 +4,6 @@ Side-scroller survival game set in a procedurally generated world.
 # Key Concepts 
 
 The game consists of a player that can move freely around a procedurally generated 2d map and modify it by placing or removing blocks. 
-
 The map is split into multiple Chunks and each Chunk consists of multiple blocks. 
 
 A Block is the structure that makes up the Chunks and each Block inherits the IBlock interface and can have unique proprieties.
